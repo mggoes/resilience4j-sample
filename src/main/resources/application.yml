@@ -1,0 +1,121 @@
+spring:
+  main:
+    banner-mode: off
+
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+    ratelimiters:
+      enabled: true
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+feign:
+  circuitbreaker:
+    enabled: true
+    alphanumeric-ids:
+      enabled: true
+
+resilience4j:
+  circuitbreaker:
+    #    circuit-breaker-aspect-order: 2
+    configs:
+      default:
+        sliding-window-size: 100
+        permitted-number-of-calls-in-half-open-state: 10
+        wait-duration-in-open-state: 10000
+        failure-rate-threshold: 60
+        event-consumer-buffer-size: 10
+        register-health-indicator: true
+      some-shared:
+        sliding-window-size: 50
+        permitted-number-of-calls-in-half-open-state: 10
+    instances:
+      backend-a:
+        #        base-config: some-shared
+        register-health-indicator: true
+        sliding-window-size: 2
+      backend-b:
+        register-health-indicator: true
+        sliding-window-size: 3
+        permitted-number-of-calls-in-half-open-state: 1
+        sliding-window-type: time_based
+        minimum-number-of-calls: 1
+        wait-duration-in-open-state: 30s
+        failure-rate-threshold: 1
+        event-consumer-buffer-size: 10
+      #        record-failure-predicate: io.github.robwin.exception.RecordFailurePredicate
+      CustomerClientcustomers:
+        register-health-indicator: true
+        sliding-window-size: 2
+        permitted-number-of-calls-in-half-open-state: 1
+        sliding-window-type: count_based
+        minimum-number-of-calls: 3
+        wait-duration-in-open-state: 5s
+        failure-rate-threshold: 1
+        event-consumer-buffer-size: 10
+  retry:
+    instances:
+      backend-a:
+        max-attempts: 3
+        wait-duration: 2s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.lang.IllegalStateException
+        ignore-exceptions:
+          - java.lang.IllegalArgumentException
+      backend-b:
+        max-attempts: 2
+        wait-duration: 2s
+        retry-exceptions:
+          - java.lang.IllegalStateException
+        ignore-exceptions:
+          - java.lang.IllegalArgumentException
+  bulkhead:
+    instances:
+      backend-a:
+        max-concurrent-calls: 1
+        max-wait-duration: 10ms
+      backend-b:
+        max-wait-duration: 10ms
+        max-concurrent-calls: 20
+  thread-pool-bulkhead:
+    instances:
+      #      backend-a:
+      #        max-thread-pool-size: 1
+      #        core-thread-pool-size: 1
+      #        queue-capacity: 1
+      backend-c:
+        max-thread-pool-size: 1
+        core-thread-pool-size: 1
+        queue-capacity: 1
+  ratelimiter:
+    instances:
+      backend-a:
+        limit-for-period: 10
+        limit-refresh-period: 1s
+        timeout-duration: 0
+        register-health-indicator: true
+        event-consumer-buffer-size: 100
+      backend-b:
+        limit-for-period: 6
+        limit-refresh-period: 500ms
+        timeout-duration: 3s
+  timelimiter:
+    instances:
+      backend-a:
+        timeout-duration: 2s
+        cancel-running-future: true
+      backend-b:
+        timeout-duration: 1s
+        cancel-running-future: false
+      CustomerClientcustomers:
+        timeout-duration: 1s
+        cancel-running-future: true
