@@ -2,6 +2,9 @@ spring:
   main:
     banner-mode: off
 
+server:
+  port: 8081
+
 management:
   health:
     circuitbreakers:
@@ -21,6 +24,11 @@ feign:
     enabled: true
     alphanumeric-ids:
       enabled: true
+
+#logging:
+#  level:
+#    br.com.sample.client.InvoiceClient: DEBUG
+#    br.com.sample.client.OrderClient: DEBUG
 
 resilience4j:
   circuitbreaker:
@@ -78,6 +86,16 @@ resilience4j:
           - java.lang.IllegalStateException
         ignore-exceptions:
           - java.lang.IllegalArgumentException
+      InvoiceClientretrieveInvoice:
+        max-attempts: 2
+        wait-duration: 1s
+        retry-exceptions:
+          - java.lang.Exception
+      OrderClientretrieveOrder:
+        max-attempts: 2
+        wait-duration: 1s
+        retry-exceptions:
+          - java.lang.Exception
   bulkhead:
     instances:
       backend-a:
@@ -119,3 +137,7 @@ resilience4j:
       CustomerClientcustomers:
         timeout-duration: 1s
         cancel-running-future: true
+      InvoiceClientretrieveInvoice:
+        timeout-duration: 5s
+      OrderClientretrieveOrder:
+        timeout-duration: 5s
